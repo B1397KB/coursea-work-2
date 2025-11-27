@@ -1,0 +1,49 @@
+@using EventApp.Client.Models
+@using Microsoft.AspNetCore.Components
+
+<!-- EventCard component: supports two-way binding via `Event` and `EventChanged` -->
+<div class="card">
+    <div>
+        <label>Title:</label>
+        <input value="@Event.Title" @oninput="OnTitleChanged" />
+    </div>
+    <div>
+        <label>Date:</label>
+        <input type="date" value="@Event.Date.ToString("yyyy-MM-dd")" @onchange="OnDateChanged" />
+    </div>
+    <div>
+        <label>Location:</label>
+        <input value="@Event.Location" @oninput="OnLocationChanged" />
+    </div>
+    <div>
+        <label>Description:</label>
+        <textarea @oninput="OnDescriptionChanged">@Event.Description</textarea>
+    </div>
+    <div>
+        <label>Capacity:</label>
+        <input type="number" value="@Event.Capacity" @oninput="OnCapacityChanged" />
+    </div>
+    <div>
+        <strong>Attendees:</strong> @Event.AttendeesCount
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventModel Event { get; set; } = new EventModel();
+
+    [Parameter]
+    public EventCallback<EventModel> EventChanged { get; set; }
+
+    // Helper to propagate changes to parent for two-way binding
+    private async Task NotifyChangedAsync()
+    {
+        await EventChanged.InvokeAsync(Event);
+    }
+
+    private async Task OnTitleChanged(ChangeEventArgs e) { Event.Title = e?.Value?.ToString() ?? string.Empty; await NotifyChangedAsync(); }
+    private async Task OnDateChanged(ChangeEventArgs e) { if (DateTime.TryParse(e?.Value?.ToString(), out var dt)) Event.Date = dt; await NotifyChangedAsync(); }
+    private async Task OnLocationChanged(ChangeEventArgs e) { Event.Location = e?.Value?.ToString() ?? string.Empty; await NotifyChangedAsync(); }
+    private async Task OnDescriptionChanged(ChangeEventArgs e) { Event.Description = e?.Value?.ToString() ?? string.Empty; await NotifyChangedAsync(); }
+    private async Task OnCapacityChanged(ChangeEventArgs e) { if (int.TryParse(e?.Value?.ToString(), out var v)) Event.Capacity = v; await NotifyChangedAsync(); }
+}

@@ -1,0 +1,51 @@
+@page "/attendance"
+@using EventApp.Client.Models
+@inject EventApp.Client.Services.IEventService EventService
+
+<h1>Attendance</h1>
+
+<div>
+    <label>Select Event</label>
+    <select @bind="selectedEventId" @onchange="LoadAttendees">
+        <option value="">-- choose --</option>
+        @foreach (var e in events)
+        {
+            <option value="@e.Id">@e.Title</option>
+        }
+    </select>
+</div>
+
+@if (attendees is not null)
+{
+    <h3>Attendees (@attendees.Count())</h3>
+    <ul>
+        @foreach (var a in attendees)
+        {
+            <li>@a.FullName (@a.Email)</li>
+        }
+    </ul>
+}
+
+@code {
+    private List<EventModel> events = new();
+    private IEnumerable<RegisterModel>? attendees;
+    private Guid? selectedEventId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        events = (await EventService.GetEventsAsync()).ToList();
+    }
+
+    private async Task LoadAttendees(ChangeEventArgs e)
+    {
+        if (Guid.TryParse(e?.Value?.ToString(), out var id))
+        {
+            selectedEventId = id;
+            attendees = await EventService.GetAttendanceAsync(id);
+        }
+        else
+        {
+            attendees = null;
+        }
+    }
+}

@@ -1,0 +1,65 @@
+@page "/register"
+@using EventApp.Client.Models
+@inject EventApp.Client.Services.IEventService EventService
+
+<h1>Register for an Event</h1>
+
+<EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Select Event</label>
+        <select @bind="selectedEventId">
+            <option value="">-- choose --</option>
+            @foreach (var e in events)
+            {
+                <option value="@e.Id">@e.Title (@e.Date.ToShortDateString())</option>
+            }
+        </select>
+    </div>
+
+    <div>
+        <label>Full name</label>
+        <InputText @bind-Value="model.FullName" />
+    </div>
+    <div>
+        <label>Email</label>
+        <InputText @bind-Value="model.Email" />
+    </div>
+    <div>
+        <label>Notes</label>
+        <InputTextArea @bind-Value="model.Notes" />
+    </div>
+
+    <button type="submit">Register</button>
+</EditForm>
+
+@if (message is not null)
+{
+    <p>@message</p>
+}
+
+@code {
+    private RegisterModel model = new();
+    private List<EventModel> events = new();
+    private Guid? selectedEventId;
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        events = (await EventService.GetEventsAsync()).ToList();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (selectedEventId == null)
+        {
+            message = "Please select an event.";
+            return;
+        }
+
+        var ok = await EventService.RegisterAttendanceAsync(selectedEventId.Value, model);
+        message = ok ? "Registration successful." : "Registration failed (possibly full).";
+    }
+}

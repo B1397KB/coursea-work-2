@@ -1,0 +1,42 @@
+@page "/events"
+@using EventApp.Client.Models
+@inject EventApp.Client.Services.IEventService EventService
+
+<h1>Events</h1>
+
+<button @onclick="CreateNew">Create New Event</button>
+
+@if (events is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    @foreach (var ev in events)
+    {
+        <EventApp.Client.Components.EventCard Event="ev" EventChanged="OnEventChanged" />
+    }
+}
+
+@code {
+    private List<EventModel>? events;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var list = await EventService.GetEventsAsync();
+        events = list.ToList();
+    }
+
+    private async Task OnEventChanged(EventModel updated)
+    {
+        // For in-memory sample, nothing else required; ensure UI updates
+        StateHasChanged();
+    }
+
+    private async Task CreateNew()
+    {
+        var ev = new EventModel { Title = "New Event", Date = DateTime.Today, Location = "TBD", Capacity = 10 };
+        await EventService.AddEventAsync(ev);
+        events!.Add(ev);
+    }
+}
