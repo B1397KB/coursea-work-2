@@ -6,7 +6,7 @@
 
 <div>
     <label>Select Event</label>
-    <select @bind="selectedEventId" @onchange="LoadAttendees">
+    <select @onchange="LoadAttendees">
         <option value="">-- choose --</option>
         @foreach (var e in events)
         {
