@@ -1,0 +1,73 @@
+@page "/fetchproducts"
+@inject HttpClient Http
+
+<h3>Product List</h3>
+
+@if (products != null)
+{
+    <ul>
+        @foreach (var product in products)
+        {
+            <li>@product.Name - $@product.Price (Stock: @product.Stock) - Category: @product.Category?.Name</li>
+        }
+    </ul>
+}
+else if (errorMessage != null)
+{
+    <p class="text-danger">@errorMessage</p>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+@code {
+    private Product[]? products;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            // Call the server on the fixed development port 5002
+            var response = await Http.GetAsync("http://localhost:5002/api/productlist", cts.Token);
+            response.EnsureSuccessStatusCode();
+            var json = await response.Content.ReadAsStringAsync(cts.Token);
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            products = System.Text.Json.JsonSerializer.Deserialize<Product[]>(json, options);
+            if (products == null)
+            {
+                errorMessage = "Received empty or invalid product data.";
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            errorMessage = "Request timed out.";
+            Console.WriteLine(errorMessage);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading products: {ex.Message}";
+            Console.WriteLine(ex);
+        }
+    }
+
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public double Price { get; set; }
+        public int Stock { get; set; }
+        public Category? Category { get; set; }
+    }
+
+    public class Category
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+    }
+}
